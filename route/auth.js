@@ -6,6 +6,22 @@ const router = express.Router()
 
 const prisma = new PrismaClient()
 
+// Utility: Retry async function up to 3 times with 2s delay
+async function withRetry(fn, retries = 3, delay = 2000) {
+  let lastError;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (i < retries - 1) {
+        await new Promise(res => setTimeout(res, delay));
+      }
+    }
+  }
+  throw lastError;
+}
+
 router.post('/register',async (req,res)=>{
        const {username,email,password} = req.body
 
@@ -15,16 +31,15 @@ router.post('/register',async (req,res)=>{
         })
        }
 
-
        try{
         const hashpassword = await bcrypt.hash(password,10);
-        const user = await prisma.user.create({
+        const user = await withRetry(() => prisma.user.create({
             data:{
                 username,
                 email,
                 password: hashpassword
             }
-        })
+        }));
         return res.status(201).json(user);
        }catch(e){
         console.log("check out error:- ",e);
@@ -37,11 +52,11 @@ router.post('/register',async (req,res)=>{
 router.post('/login',async (req,res)=>{
       const {email,password} = req.body;
       try {
-        const user = await prisma.user.findUnique({
+        const user = await withRetry(() => prisma.user.findUnique({
             where:{
                 email
             }
-        })
+        }));
         if(!user){
             return res.status(401).json({
                 error:"Invalid credential"

@@ -23,15 +23,26 @@ model User {
     createdAt DateTime @default(now())
 }
 
-model Movie{
-     id Int @id @default(autoincrement())
-     title String 
-     genre String
-     description String?
-     releaseDate DateTime
-     rating Rating[]
+model Movie {
+  id Int @id @default(autoincrement())
+  title String 
+  genre String
+  description String?
+  releaseDate DateTime?
+  posterUrl String?
+  director String?
+  year Int?
+  imdbRating Float? // <-- This is the correct field for IMDB rating
+  runtime Int?
+  language String?
+  country String?
+  // Optional fields
+  cast String[]
+  awards String[]
+  tags String[]
+  similarMovies String[]
+  rating Rating[] // <-- This is the relation field
 }
-
 model Rating {
    id Int @id @default(autoincrement())
    userId Int 

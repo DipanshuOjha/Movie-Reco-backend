@@ -2,9 +2,25 @@ const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
+// Utility: Retry async function up to 3 times with 2s delay
+async function withRetry(fn, retries = 3, delay = 2000) {
+  let lastError;
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (i < retries - 1) {
+        await new Promise(res => setTimeout(res, delay));
+      }
+    }
+  }
+  throw lastError;
+}
+
 async function main() {
   try {
-    await prisma.movie.createMany({
+    await withRetry(() => prisma.movie.createMany({
       data: [
         {
           title: 'The Matrix',
@@ -19,11 +35,12 @@ async function main() {
           releaseDate: new Date('2010-07-16'),
         },
       ],
-    });
+    }));
     console.log('Seeded database with movies');
   } catch (error) {
     console.error('Seeding failed:', error);
   }
+  await withRetry(() => prisma.$disconnect());
 }
 
 main()
