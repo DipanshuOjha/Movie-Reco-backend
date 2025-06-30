@@ -4,7 +4,7 @@ const app = express();
 const authroute = require('./route/auth')
 const movieroute = require('./route/movies')
 
-const { PrismaClient }=  require('../backend/generated/prisma/client');
+const { PrismaClient }=  require('./generated/prisma/client');
 const prisma = new PrismaClient()
 
 const starttime = Date.now();
